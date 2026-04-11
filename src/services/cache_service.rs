@@ -51,10 +51,7 @@ pub async fn set_cached_url(
 }
 
 /// Removes a URL from the cache (used on delete or deactivation).
-pub async fn delete_cached_url(
-    redis: &mut redis::aio::ConnectionManager,
-    short_code: &str,
-) {
+pub async fn delete_cached_url(redis: &mut redis::aio::ConnectionManager, short_code: &str) {
     let key = format!("{}{}", URL_CACHE_PREFIX, short_code);
 
     if let Err(e) = redis.del::<_, ()>(&key).await {
@@ -64,10 +61,7 @@ pub async fn delete_cached_url(
 
 /// Increments the click counter for a short code in Redis.
 /// Uses INCR which is atomic and creates the key with value 1 if it doesn't exist.
-pub async fn increment_click_count(
-    redis: &mut redis::aio::ConnectionManager,
-    short_code: &str,
-) {
+pub async fn increment_click_count(redis: &mut redis::aio::ConnectionManager, short_code: &str) {
     let key = format!("{}{}", CLICK_COUNT_PREFIX, short_code);
 
     if let Err(e) = redis.incr::<_, _, ()>(&key, 1i64).await {
@@ -83,11 +77,7 @@ pub async fn get_and_reset_all_click_counts(
 ) -> Vec<(String, i64)> {
     let pattern = format!("{}*", CLICK_COUNT_PREFIX);
 
-    let keys: Vec<String> = match redis::cmd("KEYS")
-        .arg(&pattern)
-        .query_async(redis)
-        .await
-    {
+    let keys: Vec<String> = match redis::cmd("KEYS").arg(&pattern).query_async(redis).await {
         Ok(keys) => keys,
         Err(e) => {
             tracing::warn!("Redis KEYS failed for pattern '{}': {}", pattern, e);

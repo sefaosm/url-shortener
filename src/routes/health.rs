@@ -1,9 +1,9 @@
-use axum::{extract::State, Json};
+use axum::{Json, extract::State};
 use std::sync::Arc;
 
+use crate::AppState;
 use crate::dto::response::HealthResponse;
 use crate::errors::AppError;
-use crate::AppState;
 
 /// Health check endpoint
 #[utoipa::path(
@@ -29,10 +29,7 @@ pub async fn health_check(
     // Check Redis connectivity
     let cache_status = {
         let mut conn = state.redis.clone();
-        match redis::cmd("PING")
-            .query_async::<String>(&mut conn)
-            .await
-        {
+        match redis::cmd("PING").query_async::<String>(&mut conn).await {
             Ok(_) => "connected".to_string(),
             Err(_) => "disconnected".to_string(),
         }

@@ -18,18 +18,14 @@ impl AppConfig {
     /// the app should not start with invalid configuration.
     pub fn from_env() -> Self {
         Self {
-            database_url: env::var("DATABASE_URL")
-                .expect("DATABASE_URL must be set"),
-            redis_url: env::var("REDIS_URL")
-                .expect("REDIS_URL must be set"),
-            server_host: env::var("SERVER_HOST")
-                .unwrap_or_else(|_| "0.0.0.0".to_string()),
+            database_url: env::var("DATABASE_URL").expect("DATABASE_URL must be set"),
+            redis_url: env::var("REDIS_URL").expect("REDIS_URL must be set"),
+            server_host: env::var("SERVER_HOST").unwrap_or_else(|_| "0.0.0.0".to_string()),
             server_port: env::var("SERVER_PORT")
                 .unwrap_or_else(|_| "3000".to_string())
                 .parse()
                 .expect("SERVER_PORT must be a valid u16"),
-            base_url: env::var("BASE_URL")
-                .unwrap_or_else(|_| "http://localhost:3000".to_string()),
+            base_url: env::var("BASE_URL").unwrap_or_else(|_| "http://localhost:3000".to_string()),
             default_code_length: env::var("DEFAULT_CODE_LENGTH")
                 .unwrap_or_else(|_| "7".to_string())
                 .parse()

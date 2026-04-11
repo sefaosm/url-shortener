@@ -1,11 +1,11 @@
-use axum::{extract::State, http::StatusCode, Json};
+use axum::{Json, extract::State, http::StatusCode};
 use std::sync::Arc;
 
+use crate::AppState;
 use crate::dto::request::ShortenRequest;
 use crate::dto::response::ShortenResponse;
 use crate::errors::AppError;
 use crate::services::url_service;
-use crate::AppState;
 
 /// Create a new shortened URL
 #[utoipa::path(

@@ -1,15 +1,15 @@
 use axum::{
+    Json,
     extract::{Path, Query, State},
     http::StatusCode,
-    Json,
 };
 use std::sync::Arc;
 
+use crate::AppState;
 use crate::dto::request::PaginationParams;
 use crate::dto::response::UrlListResponse;
 use crate::errors::AppError;
 use crate::services::url_service;
-use crate::AppState;
 
 /// List all URLs with pagination
 #[utoipa::path(

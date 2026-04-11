@@ -24,32 +24,28 @@ pub async fn create_url(
 }
 
 /// Finds an active URL by its short code.
-pub async fn find_by_short_code(pool: &PgPool, short_code: &str) -> Result<Option<Url>, sqlx::Error> {
-    sqlx::query_as::<_, Url>(
-        "SELECT * FROM urls WHERE short_code = $1 AND is_active = TRUE",
-    )
-    .bind(short_code)
-    .fetch_optional(pool)
-    .await
+pub async fn find_by_short_code(
+    pool: &PgPool,
+    short_code: &str,
+) -> Result<Option<Url>, sqlx::Error> {
+    sqlx::query_as::<_, Url>("SELECT * FROM urls WHERE short_code = $1 AND is_active = TRUE")
+        .bind(short_code)
+        .fetch_optional(pool)
+        .await
 }
 
 /// Checks if a short code already exists (including inactive ones).
 pub async fn short_code_exists(pool: &PgPool, short_code: &str) -> Result<bool, sqlx::Error> {
-    let count = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM urls WHERE short_code = $1",
-    )
-    .bind(short_code)
-    .fetch_one(pool)
-    .await?;
+    let count = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM urls WHERE short_code = $1")
+        .bind(short_code)
+        .fetch_one(pool)
+        .await?;
 
     Ok(count > 0)
 }
 
 /// Increments the click count and updates last_clicked_at timestamp.
-pub async fn increment_click_count(
-    pool: &PgPool,
-    id: Uuid,
-) -> Result<(), sqlx::Error> {
+pub async fn increment_click_count(pool: &PgPool, id: Uuid) -> Result<(), sqlx::Error> {
     sqlx::query(
         "UPDATE urls SET click_count = click_count + 1, last_clicked_at = NOW() WHERE id = $1",
     )
@@ -62,22 +58,17 @@ pub async fn increment_click_count(
 
 /// Soft deletes a URL by setting is_active = false.
 pub async fn soft_delete(pool: &PgPool, short_code: &str) -> Result<bool, sqlx::Error> {
-    let result = sqlx::query(
-        "UPDATE urls SET is_active = FALSE WHERE short_code = $1 AND is_active = TRUE",
-    )
-    .bind(short_code)
-    .execute(pool)
-    .await?;
+    let result =
+        sqlx::query("UPDATE urls SET is_active = FALSE WHERE short_code = $1 AND is_active = TRUE")
+            .bind(short_code)
+            .execute(pool)
+            .await?;
 
     Ok(result.rows_affected() > 0)
 }
 
 /// Lists URLs with pagination, ordered by created_at descending.
-pub async fn list_urls(
-    pool: &PgPool,
-    limit: i64,
-    offset: i64,
-) -> Result<Vec<Url>, sqlx::Error> {
+pub async fn list_urls(pool: &PgPool, limit: i64, offset: i64) -> Result<Vec<Url>, sqlx::Error> {
     sqlx::query_as::<_, Url>(
         "SELECT * FROM urls WHERE is_active = TRUE ORDER BY created_at DESC LIMIT $1 OFFSET $2",
     )
@@ -89,11 +80,9 @@ pub async fn list_urls(
 
 /// Returns the total count of active URLs (for pagination metadata).
 pub async fn count_active_urls(pool: &PgPool) -> Result<i64, sqlx::Error> {
-    sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM urls WHERE is_active = TRUE",
-    )
-    .fetch_one(pool)
-    .await
+    sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM urls WHERE is_active = TRUE")
+        .fetch_one(pool)
+        .await
 }
 
 /// Soft deletes all expired URLs that are still active.

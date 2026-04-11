@@ -31,7 +31,12 @@ async fn shorten_valid_url_returns_201() {
 
     assert!(json["short_code"].is_string());
     assert!(json["short_url"].is_string());
-    assert!(json["original_url"].as_str().unwrap().contains("rust-lang.org"));
+    assert!(
+        json["original_url"]
+            .as_str()
+            .unwrap()
+            .contains("rust-lang.org")
+    );
 }
 
 #[tokio::test]

@@ -1,7 +1,7 @@
 use axum::{
+    Json,
     http::StatusCode,
     response::{IntoResponse, Response},
-    Json,
 };
 use serde::Serialize;
 
@@ -67,9 +67,9 @@ impl IntoResponse for AppError {
             error: error_key.to_string(),
             message: match &self {
                 // Don't leak internal details to client
-                AppError::InternalError(_) | AppError::DatabaseError(_) | AppError::CacheError(_) => {
-                    "An unexpected error occurred".to_string()
-                }
+                AppError::InternalError(_)
+                | AppError::DatabaseError(_)
+                | AppError::CacheError(_) => "An unexpected error occurred".to_string(),
                 other => other.to_string(),
             },
             status: status.as_u16(),

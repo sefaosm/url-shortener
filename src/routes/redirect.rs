@@ -1,13 +1,13 @@
 use axum::{
     extract::{Path, State},
-    http::{header, HeaderMap, HeaderValue, StatusCode},
+    http::{HeaderMap, HeaderValue, StatusCode, header},
     response::{IntoResponse, Response},
 };
 use std::sync::Arc;
 
+use crate::AppState;
 use crate::errors::AppError;
 use crate::services::url_service;
-use crate::AppState;
 
 /// Redirect to the original URL by short code
 #[utoipa::path(
@@ -44,17 +44,14 @@ pub async fn redirect(
         .and_then(|v| v.to_str().ok())
         .map(|s| s.to_string());
 
-    let original_url = url_service::resolve_url(
-        &state,
-        &code,
-        ip_address,
-        user_agent,
-        referer,
-    )
-    .await?;
+    let original_url =
+        url_service::resolve_url(&state, &code, ip_address, user_agent, referer).await?;
 
-    let location = HeaderValue::from_str(&original_url)
-        .map_err(|_| AppError::InternalError(anyhow::Error::msg("Invalid URL stored in database".to_string())))?;
+    let location = HeaderValue::from_str(&original_url).map_err(|_| {
+        AppError::InternalError(anyhow::Error::msg(
+            "Invalid URL stored in database".to_string(),
+        ))
+    })?;
 
     Ok((StatusCode::FOUND, [(header::LOCATION, location)]).into_response())
 }

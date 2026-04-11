@@ -10,9 +10,7 @@ async fn create_short_url(router: &axum::Router, url: &str) -> String {
         .method("POST")
         .uri("/api/v1/shorten")
         .header("Content-Type", "application/json")
-        .body(Body::from(
-            serde_json::json!({ "url": url }).to_string(),
-        ))
+        .body(Body::from(serde_json::json!({ "url": url }).to_string()))
         .unwrap();
 
     let response = router.clone().oneshot(request).await.unwrap();

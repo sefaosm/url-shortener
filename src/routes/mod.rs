@@ -6,8 +6,11 @@ pub mod urls;
 
 use std::sync::Arc;
 
-use axum::{routing::{get, delete, post}, Router};
-use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
+use axum::{
+    Router,
+    routing::{delete, get, post},
+};
+use tower_governor::{GovernorLayer, governor::GovernorConfigBuilder};
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::{self, TraceLayer};
 use tracing::Level;
@@ -42,22 +45,32 @@ pub fn create_router(state: Arc<AppState>) -> Router {
 
     let shorten_route = Router::new()
         .route("/shorten", post(shorten::create_short_url))
-        .layer(GovernorLayer { config: Arc::new(shorten_limiter) });
+        .layer(GovernorLayer {
+            config: Arc::new(shorten_limiter),
+        });
 
     let api_routes = Router::new()
         .route("/health", get(health::health_check))
         .route("/stats/:code", get(stats::get_url_stats))
         .route("/urls", get(urls::list_urls))
         .route("/urls/:code", delete(urls::delete_url))
-        .layer(GovernorLayer { config: Arc::new(api_limiter) });
+        .layer(GovernorLayer {
+            config: Arc::new(api_limiter),
+        });
 
     let redirect_route = Router::new()
         .route("/:code", get(redirect::redirect))
-        .layer(GovernorLayer { config: Arc::new(redirect_limiter) });
+        .layer(GovernorLayer {
+            config: Arc::new(redirect_limiter),
+        });
 
     let cors = CorsLayer::new()
         .allow_origin(Any)
-        .allow_methods([axum::http::Method::GET, axum::http::Method::POST, axum::http::Method::DELETE])
+        .allow_methods([
+            axum::http::Method::GET,
+            axum::http::Method::POST,
+            axum::http::Method::DELETE,
+        ])
         .allow_headers(Any);
 
     Router::new()

@@ -44,7 +44,12 @@ async fn stats_returns_200_for_existing_url() {
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
 
     assert_eq!(json["short_code"], code);
-    assert!(json["original_url"].as_str().unwrap().contains("rust-lang.org"));
+    assert!(
+        json["original_url"]
+            .as_str()
+            .unwrap()
+            .contains("rust-lang.org")
+    );
     assert!(json["click_count"].is_number());
 }
 

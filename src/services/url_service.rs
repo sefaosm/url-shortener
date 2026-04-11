@@ -2,7 +2,7 @@ use chrono::{Duration, Utc};
 use std::sync::Arc;
 
 use crate::AppState;
-use crate::dto::response::{ClickDetail, UrlStatsResponse, UrlListResponse, UrlSummary};
+use crate::dto::response::{ClickDetail, UrlListResponse, UrlStatsResponse, UrlSummary};
 use crate::errors::AppError;
 use crate::models::Url;
 use crate::repositories::click_repository;
@@ -259,10 +259,7 @@ pub async fn list_urls(
 
 /// Soft deletes a URL by its short code.
 /// Also removes it from Redis cache.
-pub async fn delete_url(
-    state: &Arc<AppState>,
-    short_code: &str,
-) -> Result<(), AppError> {
+pub async fn delete_url(state: &Arc<AppState>, short_code: &str) -> Result<(), AppError> {
     let _url = url_repository::find_by_short_code(&state.db, short_code)
         .await?
         .ok_or(AppError::NotFound)?;
