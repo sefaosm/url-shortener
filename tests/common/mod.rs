@@ -7,7 +7,6 @@ use url_shortener::AppState;
 use url_shortener::config::AppConfig;
 use url_shortener::routes::create_router;
 
-/// Creates a test router with real DB and Redis connections.
 pub async fn setup_test_app() -> (Router, Arc<AppState>) {
     dotenvy::dotenv().ok();
 
@@ -16,6 +15,12 @@ pub async fn setup_test_app() -> (Router, Arc<AppState>) {
     let db = PgPool::connect(&config.database_url)
         .await
         .expect("Failed to connect to test database");
+
+    // Run migrations automatically — works both locally and in CI
+    sqlx::migrate!()
+        .run(&db)
+        .await
+        .expect("Failed to run migrations");
 
     let redis = redis::Client::open(config.redis_url.as_str())
         .expect("Invalid Redis URL")
@@ -34,7 +39,6 @@ pub async fn setup_test_app() -> (Router, Arc<AppState>) {
     (router, state)
 }
 
-/// Cleans up database tables and Redis before each test.
 pub async fn cleanup(state: &Arc<AppState>) {
     sqlx::query("TRUNCATE TABLE click_events, urls RESTART IDENTITY CASCADE")
         .execute(&state.db)
