@@ -8,11 +8,39 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  DATABASE_URL: postgres://urlshortener:urlshortener@localhost:5432/urlshortener
+  REDIS_URL: redis://localhost:6379
+  BASE_URL: http://localhost:3000
 
 jobs:
   check:
     name: Check, Lint & Test
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: urlshortener
+          POSTGRES_PASSWORD: urlshortener
+          POSTGRES_DB: urlshortener
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - name: Checkout code
@@ -31,6 +59,9 @@ jobs:
 
       - name: Run clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Run database migrations
+        run: cargo install sqlx-cli --no-default-features --features postgres && sqlx migrate run
 
       - name: Build
         run: cargo build --release
