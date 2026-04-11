@@ -88,7 +88,6 @@ pub async fn resolve_url(
 
     // 5. Fire-and-forget: record click
     let state_clone = state.clone();
-    let code = short_code.to_string();
     let url_id = url.id;
     let original_url = url.original_url.clone();
     tokio::spawn(async move {
