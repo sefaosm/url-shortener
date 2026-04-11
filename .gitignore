@@ -1,0 +1,20 @@
+# .gitignore
+
+# Build artifacts
+/target
+
+# Environment
+.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# SQLx offline mode cache (opsiyonel, commit edilebilir)
+# .sqlx/

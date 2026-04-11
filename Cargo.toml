@@ -1,0 +1,64 @@
+[package]
+name = "url-shortener"
+version = "0.1.0"
+edition = "2024"
+description = "A fast, production-ready URL shortener service built with Rust"
+license = "MIT"
+
+[dependencies]
+# -- Web Framework & Async Runtime --
+axum = { version = "0.7", features = ["macros"] }
+tokio = { version = "1", features = ["full"] }
+tower = { version = "0.4", features = ["util", "timeout"] }
+tower-http = { version = "0.5", features = ["cors", "trace", "timeout"] }
+
+# -- Database --
+sqlx = { version = "0.8", features = [
+    "runtime-tokio",
+    "tls-rustls",
+    "postgres",
+    "uuid",
+    "chrono",
+    "migrate",
+] }
+
+# -- Cache --
+redis = { version = "0.27", features = ["tokio-comp", "connection-manager"] }
+
+# -- Serialization --
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# -- Validation --
+validator = { version = "0.18", features = ["derive"] }
+url = "2"
+
+# -- API Documentation --
+utoipa = { version = "4", features = ["axum_extras", "chrono", "uuid"] }
+utoipa-swagger-ui = { version = "7", features = ["axum"] }
+
+# -- Short Code Generation --
+nanoid = "0.4"
+
+# -- Date/Time --
+chrono = { version = "0.4", features = ["serde"] }
+
+# -- UUID --
+uuid = { version = "1", features = ["v4", "serde"] }
+
+# -- Error Handling --
+thiserror = "2"
+anyhow = "1"
+
+# -- Logging --
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+
+# -- Configuration --
+dotenvy = "0.15"
+
+# -- Rate Limiting --
+tower_governor = "0.4"
+
+[dev-dependencies]
+reqwest = { version = "0.12", features = ["json"] }
