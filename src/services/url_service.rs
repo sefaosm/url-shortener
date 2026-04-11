@@ -61,7 +61,7 @@ pub async fn resolve_url(
     // 1. Check Redis cache
     let mut redis = state.redis.clone();
     if let Some(cached_url) = cache_service::get_cached_url(&mut redis, short_code).await {
-        // Fire-and-forget: record click and increment counter
+        // Fire-and-forget: record click and increment counter in Redis
         let state_clone = state.clone();
         let code = short_code.to_string();
         tokio::spawn(async move {
@@ -89,9 +89,10 @@ pub async fn resolve_url(
     // 5. Fire-and-forget: record click
     let state_clone = state.clone();
     let url_id = url.id;
+    let code = short_code.to_string();
     let original_url = url.original_url.clone();
     tokio::spawn(async move {
-        record_click_with_id(&state_clone, url_id, ip_address, user_agent, referer).await;
+        record_click_with_id(&state_clone, url_id, &code, ip_address, user_agent, referer).await;
     });
 
     Ok(original_url)
@@ -188,24 +189,25 @@ async fn record_click_async(
         _ => return,
     };
 
-    record_click_with_id(state, url.id, ip_address, user_agent, referer).await;
+    record_click_with_id(state, url.id, short_code, ip_address, user_agent, referer).await;
 }
 
-/// Records a click event and increments the counter.
+/// Records a click event and increments the counter in Redis.
+/// The counter will be flushed to PostgreSQL by the background task.
 async fn record_click_with_id(
     state: &Arc<AppState>,
     url_id: uuid::Uuid,
+    short_code: &str,
     ip_address: Option<String>,
     user_agent: Option<String>,
     referer: Option<String>,
 ) {
-    // Increment click count in DB
-    if let Err(e) = url_repository::increment_click_count(&state.db, url_id).await {
-        tracing::error!("Failed to increment click count: {}", e);
-    }
+    // Increment click count in Redis (will be flushed to DB periodically)
+    let mut redis = state.redis.clone();
+    cache_service::increment_click_count(&mut redis, short_code).await;
 
-    // Record detailed click event
-    if let Err(e) = crate::repositories::click_repository::record_click(
+    // Record detailed click event in DB
+    if let Err(e) = click_repository::record_click(
         &state.db,
         url_id,
         ip_address.as_deref(),

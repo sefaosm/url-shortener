@@ -9,7 +9,7 @@ license = "MIT"
 # -- Web Framework & Async Runtime --
 axum = { version = "0.7", features = ["macros"] }
 tokio = { version = "1", features = ["full"] }
-tower = { version = "0.4", features = ["util", "timeout"] }
+tower = { version = "0.5", features = ["util", "timeout"] }
 tower-http = { version = "0.5", features = ["cors", "trace", "timeout"] }
 
 # -- Database --
@@ -58,7 +58,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 dotenvy = "0.15"
 
 # -- Rate Limiting --
-tower_governor = "0.4"
+tower_governor = { version = "0.4", features = ["axum"] }
 
 [dev-dependencies]
 reqwest = { version = "0.12", features = ["json"] }

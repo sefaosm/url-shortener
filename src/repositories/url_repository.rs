@@ -95,3 +95,33 @@ pub async fn count_active_urls(pool: &PgPool) -> Result<i64, sqlx::Error> {
     .fetch_one(pool)
     .await
 }
+
+/// Soft deletes all expired URLs that are still active.
+/// Returns the number of URLs that were deactivated.
+pub async fn cleanup_expired_urls(pool: &PgPool) -> Result<u64, sqlx::Error> {
+    let result = sqlx::query(
+        "UPDATE urls SET is_active = FALSE WHERE is_active = TRUE AND expires_at IS NOT NULL AND expires_at < NOW()",
+    )
+    .execute(pool)
+    .await?;
+
+    Ok(result.rows_affected())
+}
+
+/// Increments click count by a given delta for a short code.
+/// Used by the background flush task to batch-update counts from Redis.
+pub async fn increment_click_count_by_code(
+    pool: &PgPool,
+    short_code: &str,
+    delta: i64,
+) -> Result<(), sqlx::Error> {
+    sqlx::query(
+        "UPDATE urls SET click_count = click_count + $1, last_clicked_at = NOW() WHERE short_code = $2 AND is_active = TRUE",
+    )
+    .bind(delta)
+    .bind(short_code)
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}

@@ -1,14 +1,13 @@
-// src/main.rs
-
+use std::net::SocketAddr;
 use std::sync::Arc;
 
 use anyhow::Context;
 use redis::Client;
 use sqlx::postgres::PgPoolOptions;
 use tokio::net::TcpListener;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
+use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
-use url_shortener::{config::AppConfig, routes, AppState};
+use url_shortener::{AppState, config::AppConfig, routes};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -23,7 +22,10 @@ async fn main() -> anyhow::Result<()> {
 
     // 3. Load configuration
     let config = AppConfig::from_env();
-    tracing::info!("Configuration loaded, starting server at {}", config.server_addr());
+    tracing::info!(
+        "Configuration loaded, starting server at {}",
+        config.server_addr()
+    );
 
     // 4. Create PostgreSQL connection pool
     let db_pool = PgPoolOptions::new()
@@ -41,8 +43,7 @@ async fn main() -> anyhow::Result<()> {
     tracing::info!("Database migrations applied");
 
     // 6. Create Redis connection
-    let redis_client = Client::open(config.redis_url.as_str())
-        .context("Invalid Redis URL")?;
+    let redis_client = Client::open(config.redis_url.as_str()).context("Invalid Redis URL")?;
     let redis_conn = redis::aio::ConnectionManager::new(redis_client)
         .await
         .context("Failed to connect to Redis")?;
@@ -57,19 +58,30 @@ async fn main() -> anyhow::Result<()> {
     });
 
     // 8. Build router
-    let router = routes::create_router(state);
+    let router = routes::create_router(state.clone());
 
-    // 9. Start server with graceful shutdown
+    // 9. Spawn background tasks
+    tokio::spawn(url_shortener::tasks::cleanup::run_expired_url_cleanup(
+        state.clone(),
+    ));
+    tokio::spawn(url_shortener::tasks::click_flush::run_click_count_flush(
+        state.clone(),
+    ));
+
+    // 10. Start server with graceful shutdown
     let listener = TcpListener::bind(config.server_addr())
         .await
         .context("Failed to bind TCP listener")?;
 
     tracing::info!("🚀 Server listening on http://{}", config.server_addr());
 
-    axum::serve(listener, router)
-        .with_graceful_shutdown(shutdown_signal())
-        .await
-        .context("Server error")?;
+    axum::serve(
+        listener,
+        router.into_make_service_with_connect_info::<std::net::SocketAddr>(),
+    )
+    .with_graceful_shutdown(shutdown_signal())
+    .await
+    .context("Server error")?;
 
     tracing::info!("Server shut down gracefully");
     Ok(())
