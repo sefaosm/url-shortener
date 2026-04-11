@@ -53,6 +53,7 @@ Routes (HTTP handling) → Services (business logic) → Repositories (database 
 - [ ] **Phase 6:** Integration tests
 
 ## Project Structure
+```
 src/
 ├── config/
 │   └── mod.rs              # AppConfig from environment variables
@@ -83,7 +84,7 @@ src/
 │   └── url_service.rs
 ├── lib.rs                  # AppState
 └── main.rs                 # Entry point
-
+```
 ## Getting Started
 
 ### Prerequisites
