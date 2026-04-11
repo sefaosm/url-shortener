@@ -22,7 +22,7 @@ async fn health_check_returns_200() {
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
 
-    assert_eq!(json["status"], "ok");
+    assert_eq!(json["status"], "healthy");
     assert!(json["uptime"].is_string());
     assert!(json["database"].is_string());
 }
