@@ -1,11 +1,13 @@
 use chrono::{Duration, Utc};
 use std::sync::Arc;
 
+use crate::AppState;
+use crate::dto::response::{ClickDetail, UrlStatsResponse, UrlListResponse, UrlSummary};
 use crate::errors::AppError;
 use crate::models::Url;
+use crate::repositories::click_repository;
 use crate::repositories::url_repository;
 use crate::services::{cache_service, code_generator};
-use crate::AppState;
 
 /// Maximum number of retries when a generated code collides.
 const MAX_COLLISION_RETRIES: u32 = 5;
@@ -96,11 +98,43 @@ pub async fn resolve_url(
     Ok(original_url)
 }
 
+/// Returns URL details along with recent click events.
+pub async fn get_url_stats(
+    state: &Arc<AppState>,
+    short_code: &str,
+) -> Result<UrlStatsResponse, AppError> {
+    let url = url_repository::find_by_short_code(&state.db, short_code)
+        .await?
+        .ok_or(AppError::NotFound)?;
+
+    let recent_clicks = click_repository::get_recent_clicks(&state.db, url.id, 20).await?;
+
+    let click_details: Vec<ClickDetail> = recent_clicks
+        .into_iter()
+        .map(|click| ClickDetail {
+            ip_address: click.ip_address,
+            user_agent: click.user_agent,
+            referer: click.referer,
+            clicked_at: click.clicked_at,
+        })
+        .collect();
+
+    Ok(UrlStatsResponse {
+        short_code: url.short_code,
+        original_url: url.original_url,
+        created_at: url.created_at,
+        expires_at: url.expires_at,
+        last_clicked_at: url.last_clicked_at,
+        is_active: url.is_active,
+        click_count: url.click_count,
+        recent_clicks: click_details,
+    })
+}
+
 /// Validates that the input is a proper HTTP/HTTPS URL.
 fn validate_url(input: &str) -> Result<(), AppError> {
-    let parsed = url::Url::parse(input).map_err(|_| {
-        AppError::ValidationError("Invalid URL format".to_string())
-    })?;
+    let parsed = url::Url::parse(input)
+        .map_err(|_| AppError::ValidationError("Invalid URL format".to_string()))?;
 
     match parsed.scheme() {
         "http" | "https" => Ok(()),
@@ -183,4 +217,59 @@ async fn record_click_with_id(
     {
         tracing::error!("Failed to record click event: {}", e);
     }
+}
+
+/// Lists all URLs with pagination.
+pub async fn list_urls(
+    state: &Arc<AppState>,
+    page: Option<u32>,
+    per_page: Option<u32>,
+) -> Result<UrlListResponse, AppError> {
+    let page = page.unwrap_or(1).max(1);
+    let per_page = per_page.unwrap_or(20).clamp(1, 100);
+    let offset = ((page - 1) * per_page) as i64;
+    let limit = per_page as i64;
+
+    let total = url_repository::count_active_urls(&state.db).await?;
+    let urls = url_repository::list_urls(&state.db, limit, offset).await?;
+
+    let url_summaries: Vec<UrlSummary> = urls
+        .into_iter()
+        .map(|url| UrlSummary {
+            short_code: url.short_code,
+            original_url: url.original_url,
+            click_count: url.click_count,
+            is_active: url.is_active,
+            created_at: url.created_at,
+            expires_at: url.expires_at,
+        })
+        .collect();
+
+    let total_pages = ((total as f64) / (per_page as f64)).ceil() as u32;
+
+    Ok(UrlListResponse {
+        urls: url_summaries,
+        total,
+        page,
+        per_page,
+        total_pages,
+    })
+}
+
+/// Soft deletes a URL by its short code.
+/// Also removes it from Redis cache.
+pub async fn delete_url(
+    state: &Arc<AppState>,
+    short_code: &str,
+) -> Result<(), AppError> {
+    let _url = url_repository::find_by_short_code(&state.db, short_code)
+        .await?
+        .ok_or(AppError::NotFound)?;
+
+    url_repository::soft_delete(&state.db, short_code).await?;
+
+    let mut redis = state.redis.clone();
+    cache_service::delete_cached_url(&mut redis, short_code).await;
+
+    Ok(())
 }

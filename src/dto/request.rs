@@ -7,3 +7,9 @@ pub struct ShortenRequest {
     pub custom_code: Option<String>,
     pub expires_in_hours: Option<i64>,
 }
+
+#[derive(Deserialize)]
+pub struct PaginationParams {
+    pub page: Option<u32>,
+    pub per_page: Option<u32>,
+}

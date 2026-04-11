@@ -6,7 +6,7 @@ pub mod urls;
 
 use std::sync::Arc;
 
-use axum::{routing::{get, post}, Router};
+use axum::{routing::{get, delete, post}, Router};
 
 use crate::AppState;
 
@@ -18,6 +18,9 @@ pub fn create_router(state: Arc<AppState>) -> Router {
 
     Router::new()
         .nest("/api/v1", api_v1)
+        .route("/api/v1/stats/:code", get(stats::get_url_stats))
+        .route("/api/v1/urls", get(urls::list_urls))
+        .route("/api/v1/urls/:code", delete(urls::delete_url))
         .route("/:code", get(redirect::redirect))
         .with_state(state)
 }
