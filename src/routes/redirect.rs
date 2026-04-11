@@ -1,5 +1,3 @@
-// src/routes/redirect.rs
-
 use axum::{
     extract::{Path, State},
     http::{header, HeaderMap, HeaderValue, StatusCode},
@@ -11,10 +9,21 @@ use crate::errors::AppError;
 use crate::services::url_service;
 use crate::AppState;
 
-/// GET /:code
-/// Redirects to the original URL.
-/// Uses 302 Found instead of 301 so browsers don't cache the redirect,
-/// allowing us to track every click.
+/// Redirect to the original URL by short code
+#[utoipa::path(
+    get,
+    path = "/{code}",
+    tag = "Redirect",
+    params(
+        ("code" = String, Path, description = "The short code to resolve"),
+    ),
+    responses(
+        (status = 302, description = "Redirect to original URL"),
+        (status = 404, description = "Short code not found"),
+        (status = 410, description = "URL has expired"),
+        (status = 429, description = "Rate limit exceeded"),
+    )
+)]
 pub async fn redirect(
     State(state): State<Arc<AppState>>,
     Path(code): Path<String>,

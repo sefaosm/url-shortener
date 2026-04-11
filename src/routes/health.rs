@@ -5,8 +5,15 @@ use crate::dto::response::HealthResponse;
 use crate::errors::AppError;
 use crate::AppState;
 
-/// GET /api/v1/health
-/// Returns the health status of the application including DB and cache connectivity.
+/// Health check endpoint
+#[utoipa::path(
+    get,
+    path = "/api/v1/health",
+    tag = "Health",
+    responses(
+        (status = 200, description = "Service is healthy", body = HealthResponse),
+    )
+)]
 pub async fn health_check(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<HealthResponse>, AppError> {

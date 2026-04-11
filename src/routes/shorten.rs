@@ -7,8 +7,19 @@ use crate::errors::AppError;
 use crate::services::url_service;
 use crate::AppState;
 
-/// POST /api/v1/shorten
-/// Creates a new shortened URL.
+/// Create a new shortened URL
+#[utoipa::path(
+    post,
+    path = "/api/v1/shorten",
+    tag = "URLs",
+    request_body = ShortenRequest,
+    responses(
+        (status = 201, description = "URL shortened successfully", body = ShortenResponse),
+        (status = 409, description = "Custom code already exists"),
+        (status = 422, description = "Invalid URL format"),
+        (status = 429, description = "Rate limit exceeded"),
+    )
+)]
 pub async fn create_short_url(
     State(state): State<Arc<AppState>>,
     Json(payload): Json<ShortenRequest>,

@@ -77,10 +77,10 @@ pub async fn resolve_url(
         .ok_or(AppError::NotFound)?;
 
     // 3. Check expiration
-    if let Some(expires_at) = url.expires_at {
-        if expires_at < Utc::now() {
-            return Err(AppError::ExpiredUrl);
-        }
+    if let Some(expires_at) = url.expires_at
+        && expires_at < Utc::now()
+    {
+        return Err(AppError::ExpiredUrl);
     }
 
     // 4. Cache the result in Redis

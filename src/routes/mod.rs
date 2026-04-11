@@ -7,13 +7,15 @@ pub mod urls;
 use std::sync::Arc;
 
 use axum::{routing::{get, delete, post}, Router};
-use axum::http::Method;
 use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::{self, TraceLayer};
 use tracing::Level;
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
 use crate::AppState;
+use crate::openapi::ApiDoc;
 
 /// Builds the complete application router with all routes and middleware.
 pub fn create_router(state: Arc<AppState>) -> Router {
@@ -55,10 +57,11 @@ pub fn create_router(state: Arc<AppState>) -> Router {
 
     let cors = CorsLayer::new()
         .allow_origin(Any)
-        .allow_methods([Method::GET, Method::POST, Method::DELETE])
+        .allow_methods([axum::http::Method::GET, axum::http::Method::POST, axum::http::Method::DELETE])
         .allow_headers(Any);
 
     Router::new()
+        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
         .nest("/api/v1", shorten_route)
         .nest("/api/v1", api_routes)
         .merge(redirect_route)
