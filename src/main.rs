@@ -57,7 +57,7 @@ async fn main() -> anyhow::Result<()> {
     });
 
     // 8. Build router
-    let router = routes::create_router(state.clone());
+    let router = routes::create_router(state.clone(), true);
 
     // 9. Spawn background tasks
     tokio::spawn(url_shortener::tasks::cleanup::run_expired_url_cleanup(

@@ -35,7 +35,7 @@ pub async fn setup_test_app() -> (Router, Arc<AppState>) {
         start_time: Instant::now(),
     });
 
-    let router = create_router(state.clone());
+    let router = create_router(state.clone(), false);
     (router, state)
 }
 
