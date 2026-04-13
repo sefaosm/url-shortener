@@ -12,6 +12,7 @@ use axum::{
 };
 use tower_governor::{GovernorLayer, governor::GovernorConfigBuilder};
 use tower_http::cors::{Any, CorsLayer};
+use tower_http::services::{ServeDir, ServeFile};
 use tower_http::trace::{self, TraceLayer};
 use tracing::Level;
 use utoipa::OpenApi;
@@ -81,6 +82,8 @@ pub fn create_router(state: Arc<AppState>, enable_rate_limit: bool) -> Router {
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
         .nest("/api/v1", shorten_route)
         .nest("/api/v1", api_routes)
+        .route_service("/", ServeFile::new("static/index.html"))
+        .nest_service("/static", ServeDir::new("static"))
         .merge(redirect_route)
         .with_state(state)
         .layer(cors)

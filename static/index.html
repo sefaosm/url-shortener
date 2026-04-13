@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Shortener</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔗 URL Shortener</h1>
+            <p class="subtitle">Shorten your long URLs in one click</p>
+        </header>
+
+        <section class="shorten-section">
+            <form id="shorten-form">
+                <div class="input-group">
+                    <input type="url" id="url-input" placeholder="https://your-long-url.com/..." required />
+                    <button type="submit" id="shorten-btn">Shorten</button>
+                </div>
+            </form>
+            <div id="result" class="result hidden">
+                <span id="short-url-text"></span>
+                <a id="short-url-link" href="#" target="_blank">Open ↗</a>
+                <button class="copy-btn" onclick="copyShortUrl()">Copy</button>
+            </div>
+            <div id="error-msg" class="error-msg hidden"></div>
+        </section>
+
+        <section class="urls-section">
+            <div class="section-header">
+                <h2>All URLs</h2>
+                <button class="refresh-btn" onclick="loadUrls()">↻ Refresh</button>
+            </div>
+            <table id="urls-table">
+                <thead>
+                    <tr>
+                        <th>Short Code</th>
+                        <th>Original URL</th>
+                        <th>Clicks</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="urls-body"></tbody>
+            </table>
+            <div id="empty-state" class="empty-state hidden">
+                No URLs yet. Shorten one above!
+            </div>
+            <div id="pagination" class="pagination"></div>
+        </section>
+
+        <div id="stats-modal" class="modal hidden" onclick="if(event.target===this)closeStats()">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>URL Statistics</h3>
+                    <button class="close-btn" onclick="closeStats()">✕</button>
+                </div>
+                <div id="stats-body"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

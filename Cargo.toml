@@ -10,7 +10,7 @@ license = "MIT"
 axum = { version = "0.7", features = ["macros"] }
 tokio = { version = "1", features = ["full"] }
 tower = { version = "0.5", features = ["util", "timeout"] }
-tower-http = { version = "0.5", features = ["cors", "trace", "timeout"] }
+tower-http = { version = "0.5", features = ["cors", "trace", "timeout", "fs"] }
 
 # -- Database --
 sqlx = { version = "0.8", features = [
