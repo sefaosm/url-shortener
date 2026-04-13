@@ -24,6 +24,11 @@ pub async fn create_short_url(
     // Validate the original URL
     validate_url(original_url)?;
 
+    // Check for duplicate original URL (active + non-expired only)
+    if let Some(existing) = url_repository::find_by_original_url(&state.db, original_url).await? {
+        return Err(AppError::AlreadyExists(existing.short_code));
+    }
+
     // Calculate expiration time
     let expires_at = expires_in_hours.map(|hours| Utc::now() + Duration::hours(hours));
 

@@ -1,5 +1,3 @@
-// src/repositories/url_repository.rs
-
 use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -20,6 +18,20 @@ pub async fn create_url(
     .bind(original_url)
     .bind(expires_at)
     .fetch_one(pool)
+    .await
+}
+
+/// Finds an active, non-expired URL by its original URL.
+/// Used for duplicate detection — prevents shortening the same URL twice.
+pub async fn find_by_original_url(
+    pool: &PgPool,
+    original_url: &str,
+) -> Result<Option<Url>, sqlx::Error> {
+    sqlx::query_as::<_, Url>(
+        "SELECT * FROM urls WHERE original_url = $1 AND is_active = TRUE AND (expires_at IS NULL OR expires_at > NOW())",
+    )
+    .bind(original_url)
+    .fetch_optional(pool)
     .await
 }
 
